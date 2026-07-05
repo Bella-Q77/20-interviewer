@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI模拟面试系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Start Screen */
+        .start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 90vh;
+            text-align: center;
+        }
+
+        .start-screen h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            background: linear-gradient(120deg, #00d2ff, #3a7bd5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .start-screen p {
+            font-size: 1.1em;
+            color: #aaa;
+            margin-bottom: 10px;
+            line-height: 1.8;
+        }
+
+        .start-screen .rules {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: left;
+            max-width: 600px;
+        }
+
+        .rules h3 {
+            color: #3a7bd5;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .rules li {
+            margin-bottom: 10px;
+            padding-left: 10px;
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        .btn {
+            padding: 14px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+            color: white;
+            box-shadow: 0 4px 15px rgba(58, 123, 213, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(58, 123, 213, 0.6);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(17, 153, 142, 0.4);
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(17, 153, 142, 0.6);
+        }
+
+        .btn-finish {
+            background: linear-gradient(135deg, #eb3349, #f45c43);
+            color: white;
+            box-shadow: 0 4px 15px rgba(235, 51, 73, 0.4);
+        }
+
+        .btn-finish:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(235, 51, 73, 0.6);
+        }
+
+        /* Interview Screen */
+        .interview-screen {
+            display: none;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .progress-info {
+            font-size: 1em;
+            color: #aaa;
+        }
+
+        .progress-info span {
+            color: #3a7bd5;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .timer {
+            font-size: 1.5em;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer.warning {
+            color: #f39c12;
+            animation: pulse 1s infinite;
+        }
+
+        .timer.danger {
+            color: #e74c3c;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .question-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .question-category {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(58, 123, 213, 0.2);
+            border: 1px solid rgba(58, 123, 213, 0.4);
+            border-radius: 20px;
+            font-size: 0.85em;
+            color: #3a7bd5;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-size: 1.3em;
+            line-height: 1.6;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .answer-area {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            color: #e0e0e0;
+            font-size: 1em;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .answer-area:focus {
+            outline: none;
+            border-color: #3a7bd5;
+            box-shadow: 0 0 10px rgba(58, 123, 213, 0.3);
+        }
+
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .action-bar .hint {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3a7bd5, #00d2ff);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* Result Screen */
+        .result-screen {
+            display: none;
+        }
+
+        .result-header {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .result-header h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .score-display {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .score-display.excellent {
+            background: linear-gradient(120deg, #38ef7d, #11998e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-display.good {
+            background: linear-gradient(120deg, #3a7bd5, #00d2ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-display.average {
+            background: linear-gradient(120deg, #f39c12, #fdcb6e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-display.poor {
+            background: linear-gradient(120deg, #e74c3c, #fd79a8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .result-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .summary-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .summary-card .label {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .summary-card .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .result-detail {
+            margin-top: 30px;
+        }
+
+        .result-detail h3 {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .result-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .result-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .result-item-header .q-num {
+            font-weight: bold;
+            color: #3a7bd5;
+        }
+
+        .result-item-header .q-score {
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .score-high {
+            background: rgba(56, 239, 125, 0.2);
+            color: #38ef7d;
+        }
+
+        .score-mid {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+        }
+
+        .score-low {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .result-item .question {
+            color: #ddd;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .result-item .answer {
+            color: #999;
+            font-size: 0.9em;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            white-space: pre-wrap;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .result-item .feedback {
+            color: #aaa;
+            font-size: 0.9em;
+            padding: 10px;
+            background: rgba(58, 123, 213, 0.1);
+            border-left: 3px solid #3a7bd5;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255,255,255,0.1);
+            border-top-color: #3a7bd5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #ccc;
+            font-size: 1.1em;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .start-screen h1 { font-size: 1.8em; }
+            .result-summary { grid-template-columns: 1fr; }
+            .header { flex-direction: column; gap: 10px; }
+            .action-bar { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div class="start-screen" id="startScreen">
+            <h1>AI 模拟面试系统</h1>
+            <p>涵盖风控、数据分析、机器学习、数据结构与算法四大方向</p>
+            <div class="rules">
+                <h3>面试规则</h3>
+                <ol>
+                    <li>每轮面试共 <strong>10 道题</strong>，题目从题库中随机抽取</li>
+                    <li>每道题限时 <strong>5 分钟</strong>，倒计时结束后自动进入下一题</li>
+                    <li>你可以随时点击"提交回答"进入下一题</li>
+                    <li>最后一题可在5分钟内主动点击"交卷"提前结束</li>
+                    <li>10道题全部结束后将自动交卷并评分</li>
+                    <li>系统将对你的回答进行智能评分和反馈</li>
+                </ol>
+            </div>
+            <button class="btn btn-primary" onclick="startInterview()">开始面试</button>
+        </div>
+
+        <!-- Interview Screen -->
+        <div class="interview-screen" id="interviewScreen">
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="header">
+                <div class="progress-info">
+                    第 <span id="currentNum">1</span> / <span>10</span> 题
+                </div>
+                <div class="timer" id="timer">05:00</div>
+            </div>
+            <div class="question-card">
+                <div class="question-category" id="questionCategory">风控方向</div>
+                <div class="question-text" id="questionText">Loading...</div>
+            </div>
+            <textarea class="answer-area" id="answerArea" placeholder="请在此输入你的回答..."></textarea>
+            <div class="action-bar" style="margin-top: 15px;">
+                <div class="hint" id="actionHint">回答后点击提交进入下一题</div>
+                <div class="btn-group">
+                    <button class="btn btn-submit" id="submitBtn" onclick="submitAnswer()">提交回答</button>
+                    <button class="btn btn-finish" id="finishBtn" onclick="finishExam()" style="display:none;">交卷</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div class="result-screen" id="resultScreen">
+            <div class="result-header">
+                <h2>面试评估报告</h2>
+                <div class="score-display" id="totalScore">85</div>
+                <p id="scoreComment" style="color:#aaa;font-size:1.1em;"></p>
+            </div>
+            <div class="result-summary">
+                <div class="summary-card">
+                    <div class="label">总分</div>
+                    <div class="value" id="summaryTotal">85/100</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">答题数</div>
+                    <div class="value" id="summaryAnswered">10/10</div>
+                </div>
+                <div class="summary-card">
+                    <div class="label">平均用时</div>
+                    <div class="value" id="summaryTime">2:30</div>
+                </div>
+            </div>
+            <div class="result-detail">
+                <h3>逐题详情</h3>
+                <div id="resultDetails"></div>
+            </div>
+            <div style="text-align:center;margin-top:30px;">
+                <button class="btn btn-primary" onclick="restartInterview()">再来一轮</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text">正在评分中，请稍候...</div>
+    </div>
+
+    <script>
+        // Question Bank
+        const questionBank = [
+            // 风控方向
+            { category: "风控方向", question: "互联网金融场景下的风控模型种类有哪些？", keywords: ["获客阶段", "授信阶段", "贷后阶段", "催收阶段", "用户响应模型", "申请评分模型", "反欺诈模型", "行为评分模型"] },
+            { category: "风控方向", question: "简单描述一下风控建模的流程？", keywords: ["前期准备", "模型设计", "数据拉取", "特征工程", "模型建立", "模型上线部署", "模型监控"] },
+            { category: "风控方向", question: "对于金融场景，稳定胜于一切，那在建模过程中如何保证模型的稳定性？", keywords: ["PSI", "IV差异", "交叉验证", "时间序列", "变量覆盖率", "剔除区分度过强"] },
+            { category: "风控方向", question: "为什么要做拒绝推断？常用的拒绝推断方法有哪些？", keywords: ["样本有偏", "硬性截断法", "分配法", "增加样本量", "防止样本有偏"] },
+            { category: "风控方向", question: "模型转化为规则后决策点（cutoff点）怎么设定？", keywords: ["精准率", "查全率", "误伤率", "拒绝率", "好坏件比例", "平衡点"] },
+            { category: "风控方向", question: "怎么做风控模型的冷启动？", keywords: ["规则", "借助相同模式产品", "无监督模型", "评分卡", "第三方数据"] },
+            { category: "风控方向", question: "模型上线后是怎么监控的？", keywords: ["PSI", "拒绝率", "AUC", "KS", "变量稳定度", "前期监控", "后期监控"] },
+            { category: "风控方向", question: "怎么设计反欺诈模型？", keywords: ["多分类", "无监督学习", "时序分析", "统计学验证", "设备", "位置信息", "关系网络", "黑名单"] },
+            { category: "风控方向", question: "当模型上线后发现稳定性不佳，或者线上的区分效果不好，你是怎么对模型作调整的？", keywords: ["特征稳定性", "变量替代", "分布差异", "拒绝推断", "变量鉴别度", "重新取数建模"] },
+            { category: "风控方向", question: "如何衡量一个风控模型的效果？", keywords: ["AUC", "KS", "Gini", "评分卡", "WOE", "PSI", "提升图", "洛伦兹曲线", "PR曲线"] },
+            { category: "风控方向", question: "在实际应用中，如何权衡模型的性能，可解释性和部署的难易程度？", keywords: ["评分卡", "部署简单", "可解释性", "xgboost", "集成模型", "精度", "业务需求"] },
+            { category: "风控方向", question: "对于高维稀疏特征，或者是弱特征，你是怎么处理的？", keywords: ["逻辑回归", "GBDT", "过拟合", "离散化", "WOE编码", "交叉组合"] },
+            { category: "风控方向", question: "对于成千上万维的特征你是怎么做特征筛选的，如何保证其模型的可解释性和稳定性？", keywords: ["缺失率", "方差", "IV值", "PSI差异", "相关性", "共线性", "单调性", "模型重要度"] },
+            { category: "风控方向", question: "如何根据风险因素对用户分层，构建客群差异化的模型？", keywords: ["用户画像", "静态属性", "风险属性", "分群体建模", "差异化评分卡"] },
+            { category: "风控方向", question: "额度、利率的风险定价模型你是如何设计的？", keywords: ["产品属性", "盈利模式", "cutoff", "风险等级", "平均额度", "预期利润/资损"] },
+            { category: "风控方向", question: "风控流程中不同环节的评分卡是怎么设计的？", keywords: ["A卡", "B卡", "C卡", "申请评分", "行为评分", "催收评分", "贷前", "贷中", "贷后"] },
+            { category: "风控方向", question: "芝麻信用分的主要计算维度？", keywords: ["个人属性", "稳定性", "资产状况", "消费能力", "社交情况", "信用历史", "违约历史"] },
+            { category: "风控方向", question: "什么是多头借贷？", keywords: ["2家以上金融机构", "偿还能力有限", "高风险", "资金需求困难"] },
+            { category: "风控方向", question: "模型开发中，one-hot编码好还是哑变量编码好？", keywords: ["WOE", "风控场景", "评分卡构建", "高维稀疏"] },
+            { category: "风控方向", question: "有什么好的模型调参的方法么？网格搜索？贝叶斯优化？", keywords: ["贝叶斯优化", "网格搜索", "KS", "稳定性", "精度差别不大", "千分位提升"] },
+            { category: "风控方向", question: "如何标记客户好坏的？", keywords: ["逾期天数", "迁徙率", "pd1", "pd15", "灰色客户", "样本不均衡"] },
+            { category: "风控方向", question: "做模型时用到了哪些数据源？", keywords: ["征信数据", "运营商数据", "埋点数据", "平台自有数据", "用户手填数据"] },
+            { category: "风控方向", question: "你们模型是怎么部署上线的？", keywords: ["评分卡", "pmml", "决策引擎", "flask", "Django", "if else"] },
+            { category: "风控方向", question: "xgb变量重要性用哪一个指标？", keywords: ["weight", "total_gain", "互相替代", "特征筛选"] },
+            { category: "风控方向", question: "在xgboost或者lightgbm建模之前是否进行相关性处理，去掉相关性较高的变量？", keywords: ["互相替代性", "重要性被稀释", "feature_importance", "向量空间"] },
+            { category: "风控方向", question: "不平衡场景下的过采样（朴素、SMOTE）后训练的模型都需要结果概率校正吧？如何操作？", keywords: ["单个模型不需要", "融合比较需要", "校正"] },
+            { category: "风控方向", question: "如果客群风险发生变化，会怎么做？是不是需要重新建模？", keywords: ["特征分布变化", "欺诈可能", "调整规则", "重新申请模型"] },
+
+            // 数据分析方向 - 业务题
+            { category: "数据分析", question: "你是怎么理解数据分析的？流程如何？", keywords: ["业务理解", "观察现状", "多维分析", "预测趋势", "生成策略", "推动落地", "复盘效果", "闭环"] },
+            { category: "数据分析", question: "你认为数据分析的价值如何体现？", keywords: ["业务含义", "结论", "原因", "方案", "推动落地", "复盘", "迭代优化"] },
+            { category: "数据分析", question: "指标的异常波动变化（例如日活下跌）如何分析？", keywords: ["数据源可靠", "计算口径", "市场趋势", "同比环比", "交叉分析", "业务分析", "回归预测", "风险评估"] },
+            { category: "数据分析", question: "注册类和活跃类指标，你会看哪个？", keywords: ["产品初期", "注册类", "产品成熟期", "留存", "活跃类", "生命周期"] },
+            { category: "数据分析", question: "什么是北极星指标？什么是虚荣指标？", keywords: ["第一关键指标", "引导业务发展", "拆解", "累计用户数", "累计销量", "只涨不跌"] },
+            { category: "数据分析", question: "什么是指标体系？如何建立？业务应用场景？", keywords: ["有机结合", "逻辑分层", "北极星指标", "逐层拆解", "监控趋势", "定位异常", "数据驱动"] },
+            { category: "数据分析", question: "什么是A/B test？核心原理和应用场景？", keywords: ["随机分流", "对照组", "实验组", "控制变量", "假设检验", "产品功能", "算法策略"] },
+            { category: "数据分析", question: "A/B test 如何合理分流？", keywords: ["随机均匀", "分桶", "分层", "互斥", "流量共享", "实验数据置信"] },
+            { category: "数据分析", question: "如何验证 A/B test 的结果？", keywords: ["假设检验", "T检验", "Z检验", "单尾", "双尾", "P值", "显著性"] },
+            { category: "数据分析", question: "什么是漏斗分析？有哪些注意的点？", keywords: ["转化率", "跳出率", "定位问题", "连续", "不超过5个", "相邻环节", "维度差异"] },
+            { category: "数据分析", question: "什么是EDA(Exploratory Data Analysis)？", keywords: ["频数分析", "集中趋势", "离散程度", "分布", "相关性分析", "平均值", "中位数", "标准差"] },
+            { category: "数据分析", question: "如何评估一场活动的效果？", keywords: ["关键指标达成", "漏斗分析", "渠道分析", "用户分析", "策略节奏", "ROI"] },
+            { category: "数据分析", question: "销售额下降了如何分析？", keywords: ["数据源可靠", "指标口径", "外部环境", "内部因素", "拆解", "访客数", "下单率", "客单价"] },
+            { category: "数据分析", question: "什么是同比、环比，意义是什么？", keywords: ["环比", "上一个统计周期", "阶段性变换", "季节性", "同比", "去年同期", "排除季节因素"] },
+            { category: "数据分析", question: "什么是相关性分析？相关和因果的区别是什么？", keywords: ["相关性系数", "0.5以下弱", "0.5-0.8中度", "0.8以上强", "先后顺序", "因果"] },
+            { category: "数据分析", question: "什么是聚类？业务应用场景？常见算法？", keywords: ["无监督", "特征相似", "Kmeans", "DBSCAN", "用户分层", "用户画像"] },
+            { category: "数据分析", question: "什么是分类？业务应用场景？常见算法？", keywords: ["有监督", "逻辑回归", "SVM", "决策树", "KNN", "XGBoost", "信用等级"] },
+            { category: "数据分析", question: "什么是回归？业务应用场景？常见回归算法？", keywords: ["相关强度", "定量评估", "线性回归", "lasso", "ridge", "树回归"] },
+            { category: "数据分析", question: "时间序列预测的原理是什么？有哪些应用场景？", keywords: ["趋势", "季节性", "随机性", "KPI预测", "活跃用户数", "销量预测"] },
+            { category: "数据分析", question: "如果次日用户留存率下降了5%该怎么分析？", keywords: ["两层模型", "用户细分", "新老", "渠道", "内部因素", "外部因素", "PEST"] },
+            { category: "数据分析", question: "指标和维度的区别和联系？", keywords: ["指标定量评估", "维度是角度", "不能独立存在", "搭配分析", "多维度交叉"] },
+            { category: "数据分析", question: "你理解的指标是什么？有哪些组成部分？", keywords: ["业务含义", "指标口径", "维度联合分析", "统一口径", "避免歧义"] },
+            { category: "数据分析", question: "估算一个星巴克门店的销售额", keywords: ["费米估算", "消费人数", "平均消费金额", "工作日", "周末", "高峰时段", "低峰时段"] },
+
+            // 机器学习
+            { category: "机器学习", question: "什么是Adaboost算法？请描述其工作原理。", keywords: ["弱模型", "权重", "预测错误权重上涨", "预测正确权重下降", "优先权", "决策树"] },
+            { category: "机器学习", question: "什么是AUC值？它衡量的是什么？", keywords: ["ROC曲线", "面积", "分类能力", "真正率", "假正率", "0.5到1之间"] },
+            { category: "机器学习", question: "如何防止过拟合？有哪些常见方法？", keywords: ["简易模型", "交叉验证", "正则化", "获取更多数据", "集成学习", "dropout"] },
+            { category: "机器学习", question: "什么是反向传播算法（Back Propagation）？", keywords: ["梯度", "损失函数", "参数", "优化", "链式法则", "神经网络"] },
+            { category: "机器学习", question: "什么是Bagging算法？请解释Bootstrap aggregation的原理。", keywords: ["放回采样", "子训练集", "基模型", "投票", "表决", "减少方差", "随机森林"] },
+            { category: "机器学习", question: "什么是词袋模型（Bag of Words）？", keywords: ["文本转化矩阵", "每行一个样本", "特征是单词", "二元分类器", "出现次数"] },
+            { category: "机器学习", question: "解释一下神经网络的结构（architecture）。", keywords: ["神经元", "激活函数", "层", "堆积", "验证集", "输入层", "隐藏层", "输出层"] },
+            { category: "机器学习", question: "什么是AIC（赤池信息量准则）？它的作用是什么？", keywords: ["RSS", "特征值", "样本方差", "模型比较", "特征选择阶段", "惩罚复杂度"] },
+            { category: "机器学习", question: "什么是调整R方（Adjusted R-Squared）？它和R方有什么区别？", keywords: ["变量个数", "决定系数", "新变量无统计意义时变小", "RSS", "TSS", "惩罚多余变量"] },
+            { category: "机器学习", question: "什么是Agglomerative聚类？", keywords: ["自己群组", "满足准则", "聚集", "重复", "群组增大", "层次聚类", "自底向上"] },
+            { category: "机器学习", question: "什么是梯度下降？它在机器学习中的作用是什么？", keywords: ["损失函数", "最小化", "学习率", "参数更新", "全局最优", "局部最优", "步长"] },
+            { category: "机器学习", question: "解释偏差-方差权衡（Bias-Variance Tradeoff）。", keywords: ["欠拟合", "过拟合", "偏差高", "方差高", "模型复杂度", "泛化能力"] },
+            { category: "机器学习", question: "什么是随机森林？它相比单棵决策树有什么优势？", keywords: ["Bagging", "多棵决策树", "随机特征选择", "投票", "减少过拟合", "稳定性"] },
+            { category: "机器学习", question: "L1正则化和L2正则化的区别是什么？", keywords: ["Lasso", "Ridge", "稀疏", "特征选择", "权重衰减", "绝对值", "平方"] },
+            { category: "机器学习", question: "XGBoost和传统GBDT有什么区别？", keywords: ["正则化", "二阶导数", "并行", "列抽样", "缺失值处理", "剪枝", "Shrinkage"] },
+
+            // 数据结构与算法
+            { category: "数据结构与算法", question: "什么是时间复杂度和空间复杂度？常见的复杂度有哪些？", keywords: ["O(1)", "O(n)", "O(logn)", "O(nlogn)", "O(n²)", "大O表示法", "最坏情况"] },
+            { category: "数据结构与算法", question: "数组和链表的区别是什么？各自的优缺点？", keywords: ["连续内存", "随机访问", "O(1)查找", "插入删除O(n)", "链表非连续", "指针", "插入删除O(1)", "查找O(n)"] },
+            { category: "数据结构与算法", question: "什么是哈希表？它的工作原理是什么？如何解决冲突？", keywords: ["哈希函数", "键值对", "O(1)查找", "冲突", "链地址法", "开放地址法", "负载因子"] },
+            { category: "数据结构与算法", question: "什么是二叉搜索树（BST）？它的查找、插入、删除操作的时间复杂度是多少？", keywords: ["左子树小", "右子树大", "O(logn)", "最坏O(n)", "中序遍历有序", "平衡"] },
+            { category: "数据结构与算法", question: "请解释快速排序的原理和时间复杂度。", keywords: ["分治", "基准元素", "partition", "平均O(nlogn)", "最坏O(n²)", "原地排序", "不稳定"] },
+            { category: "数据结构与算法", question: "什么是动态规划？它和贪心算法有什么区别？", keywords: ["最优子结构", "重叠子问题", "状态转移方程", "记忆化", "贪心局部最优", "动态规划全局最优"] },
+            { category: "数据结构与算法", question: "什么是栈和队列？它们的应用场景分别是什么？", keywords: ["LIFO", "FIFO", "函数调用", "括号匹配", "BFS", "消息队列", "撤销操作"] },
+            { category: "数据结构与算法", question: "请解释BFS和DFS的区别及应用场景。", keywords: ["广度优先", "深度优先", "队列", "栈/递归", "最短路径", "连通性", "拓扑排序"] },
+            { category: "数据结构与算法", question: "什么是堆（Heap）？最大堆和最小堆的区别？有什么应用？", keywords: ["完全二叉树", "父节点大于/小于子节点", "优先队列", "Top-K问题", "堆排序", "O(logn)插入删除"] },
+            { category: "数据结构与算法", question: "归并排序的原理是什么？它的时间复杂度和空间复杂度分别是多少？", keywords: ["分治", "递归分割", "合并有序数组", "O(nlogn)", "稳定", "O(n)空间", "外部排序"] },
+        ];
+
+        // State
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let answers = [];
+        let timeSpent = [];
+        let timerInterval = null;
+        let remainingTime = 300;
+        let questionStartTime = null;
+
+        function shuffleArray(arr) {
+            const shuffled = [...arr];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function startInterview() {
+            // Select 10 random questions ensuring diversity
+            const categories = ["风控方向", "数据分析", "机器学习", "数据结构与算法"];
+            let selected = [];
+
+            // Pick at least 2 from each category
+            categories.forEach(cat => {
+                const catQuestions = questionBank.filter(q => q.category === cat);
+                const shuffled = shuffleArray(catQuestions);
+                selected.push(...shuffled.slice(0, 2));
+            });
+
+            // Fill remaining 2 from random
+            const remaining = questionBank.filter(q => !selected.includes(q));
+            const shuffledRemaining = shuffleArray(remaining);
+            selected.push(...shuffledRemaining.slice(0, 2));
+
+            // Shuffle the final 10
+            currentQuestions = shuffleArray(selected);
+            currentIndex = 0;
+            answers = new Array(10).fill("");
+            timeSpent = new Array(10).fill(0);
+
+            document.getElementById("startScreen").style.display = "none";
+            document.getElementById("interviewScreen").style.display = "block";
+
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const q = currentQuestions[currentIndex];
+            document.getElementById("currentNum").textContent = currentIndex + 1;
+            document.getElementById("questionCategory").textContent = q.category;
+            document.getElementById("questionText").textContent = q.question;
+            document.getElementById("answerArea").value = answers[currentIndex] || "";
+            document.getElementById("progressBar").style.width = ((currentIndex) / 10 * 100) + "%";
+
+            // Show/hide finish button on last question
+            if (currentIndex === 9) {
+                document.getElementById("finishBtn").style.display = "inline-block";
+                document.getElementById("submitBtn").textContent = "提交回答";
+                document.getElementById("actionHint").textContent = "这是最后一题，提交后将自动交卷";
+            } else {
+                document.getElementById("finishBtn").style.display = "none";
+                document.getElementById("submitBtn").textContent = "提交回答";
+                document.getElementById("actionHint").textContent = "回答后点击提交进入下一题";
+            }
+
+            // Start timer
+            remainingTime = 300;
+            questionStartTime = Date.now();
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                updateTimerDisplay();
+
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    autoAdvance();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            const timerEl = document.getElementById("timer");
+            timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            timerEl.classList.remove("warning", "danger");
+            if (remainingTime <= 30) {
+                timerEl.classList.add("danger");
+            } else if (remainingTime <= 60) {
+                timerEl.classList.add("warning");
+            }
+        }
+
+        function autoAdvance() {
+            saveCurrentAnswer();
+            if (currentIndex < 9) {
+                currentIndex++;
+                showQuestion();
+            } else {
+                finishExam();
+            }
+        }
+
+        function submitAnswer() {
+            saveCurrentAnswer();
+            clearInterval(timerInterval);
+
+            if (currentIndex < 9) {
+                currentIndex++;
+                showQuestion();
+            } else {
+                finishExam();
+            }
+        }
+
+        function saveCurrentAnswer() {
+            answers[currentIndex] = document.getElementById("answerArea").value;
+            const elapsed = Math.round((Date.now() - questionStartTime) / 1000);
+            timeSpent[currentIndex] = elapsed;
+        }
+
+        function finishExam() {
+            saveCurrentAnswer();
+            clearInterval(timerInterval);
+
+            document.getElementById("interviewScreen").style.display = "none";
+            document.getElementById("loadingOverlay").classList.add("active");
+
+            // Simulate grading delay
+            setTimeout(() => {
+                gradeExam();
+                document.getElementById("loadingOverlay").classList.remove("active");
+                document.getElementById("resultScreen").style.display = "block";
+            }, 2000);
+        }
+
+        function gradeExam() {
+            let totalScore = 0;
+            let answeredCount = 0;
+            let totalTime = 0;
+            let details = [];
+
+            for (let i = 0; i < 10; i++) {
+                const q = currentQuestions[i];
+                const answer = answers[i] || "";
+                const time = timeSpent[i] || 0;
+                totalTime += time;
+
+                if (answer.trim().length > 0) answeredCount++;
+
+                // Score based on keyword matching and answer length
+                let score = gradeAnswer(answer, q.keywords);
+                totalScore += score;
+
+                let feedback = generateFeedback(answer, q.keywords, score);
+
+                details.push({
+                    question: q.question,
+                    category: q.category,
+                    answer: answer,
+                    score: score,
+                    feedback: feedback,
+                    time: time
+                });
+            }
+
+            // Display results
+            const avgTime = answeredCount > 0 ? Math.round(totalTime / answeredCount) : 0;
+            const avgMin = Math.floor(avgTime / 60);
+            const avgSec = avgTime % 60;
+
+            const scoreEl = document.getElementById("totalScore");
+            scoreEl.textContent = totalScore + " 分";
+            if (totalScore >= 80) scoreEl.className = "score-display excellent";
+            else if (totalScore >= 60) scoreEl.className = "score-display good";
+            else if (totalScore >= 40) scoreEl.className = "score-display average";
+            else scoreEl.className = "score-display poor";
+
+            document.getElementById("scoreComment").textContent = getScoreComment(totalScore);
+            document.getElementById("summaryTotal").textContent = totalScore + "/100";
+            document.getElementById("summaryAnswered").textContent = answeredCount + "/10";
+            document.getElementById("summaryTime").textContent = `${avgMin}:${String(avgSec).padStart(2, '0')}`;
+
+            // Render details
+            const detailsHtml = details.map((d, i) => {
+                const scoreClass = d.score >= 8 ? "score-high" : d.score >= 5 ? "score-mid" : "score-low";
+                return `
+                    <div class="result-item">
+                        <div class="result-item-header">
+                            <span class="q-num">第${i + 1}题 [${d.category}]</span>
+                            <span class="q-score ${scoreClass}">${d.score}/10分</span>
+                        </div>
+                        <div class="question">${d.question}</div>
+                        <div class="answer">${d.answer || "(未作答)"}</div>
+                        <div class="feedback">${d.feedback}</div>
+                    </div>
+                `;
+            }).join("");
+
+            document.getElementById("resultDetails").innerHTML = detailsHtml;
+        }
+
+        function gradeAnswer(answer, keywords) {
+            if (!answer || answer.trim().length === 0) return 0;
+
+            const answerLower = answer.toLowerCase();
+            let matchCount = 0;
+
+            keywords.forEach(kw => {
+                if (answerLower.includes(kw.toLowerCase())) {
+                    matchCount++;
+                }
+            });
+
+            const keywordRatio = matchCount / keywords.length;
+
+            // Base score from keyword matching (0-6)
+            let score = Math.round(keywordRatio * 6);
+
+            // Length bonus (0-2): reward substantive answers
+            const len = answer.trim().length;
+            if (len >= 200) score += 2;
+            else if (len >= 100) score += 1.5;
+            else if (len >= 50) score += 1;
+            else if (len >= 20) score += 0.5;
+
+            // Structure bonus (0-2): reward organized answers
+            const hasStructure = (answer.includes("1") || answer.includes("第一")) &&
+                                (answer.includes("2") || answer.includes("第二"));
+            const hasParagraphs = answer.split("\n").filter(l => l.trim().length > 0).length >= 2;
+            if (hasStructure) score += 1;
+            if (hasParagraphs) score += 1;
+
+            return Math.min(10, Math.round(score));
+        }
+
+        function generateFeedback(answer, keywords, score) {
+            if (!answer || answer.trim().length === 0) {
+                return "未作答。建议回顾相关知识点，此题考察的关键点包括：" + keywords.slice(0, 4).join("、") + "等。";
+            }
+
+            const answerLower = answer.toLowerCase();
+            const missed = keywords.filter(kw => !answerLower.includes(kw.toLowerCase()));
+
+            if (score >= 8) {
+                return "回答优秀！覆盖了主要知识点，表述清晰有条理。";
+            } else if (score >= 6) {
+                return "回答良好，但可以补充以下要点：" + missed.slice(0, 3).join("、") + "。";
+            } else if (score >= 4) {
+                return "回答基本正确但不够全面，建议补充：" + missed.slice(0, 4).join("、") + "等关键概念。";
+            } else {
+                return "回答较为简略，此题的核心要点包括：" + keywords.slice(0, 5).join("、") + "。建议深入学习相关内容。";
+            }
+        }
+
+        function getScoreComment(score) {
+            if (score >= 90) return "表现卓越！你对各方向知识掌握扎实，面试通过概率很高。";
+            if (score >= 80) return "表现优秀！大部分知识点掌握良好，继续保持。";
+            if (score >= 70) return "表现不错！基础扎实，部分知识点可以继续深入。";
+            if (score >= 60) return "表现及格，建议加强薄弱环节的学习。";
+            if (score >= 40) return "还需努力，建议系统性地复习各方向知识。";
+            return "基础较弱，建议从基础开始系统学习。";
+        }
+
+        function restartInterview() {
+            document.getElementById("resultScreen").style.display = "none";
+            document.getElementById("startScreen").style.display = "flex";
+            currentQuestions = [];
+            currentIndex = 0;
+            answers = [];
+            timeSpent = [];
+        }
+    </script>
+</body>
+</html>
